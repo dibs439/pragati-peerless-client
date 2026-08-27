@@ -57,7 +57,7 @@ const HospitalTargetFormWidget = ({
   const getBudget = async () => {
     //"/",
     const response = await fetch(
-      `/budget?propertyCode=${propertyCode}&budgetYear=${fye }`,
+      `/budget?propertyCode=${propertyCode}&propertyId=${propertyId}&budgetYear=${fye }`,
       {
         // const response = await fetch(`/budget?propertyCode=${propertyCode}&budgetYear=${new Date().getFullYear() + 1}`, {
         method: "GET",

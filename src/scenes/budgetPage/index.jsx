@@ -19,6 +19,7 @@ import HospitalTargetFormWidget from "scenes/widgets/forms/HospitalTargetFormWid
 // import PfslTargetFormWidget from "scenes/widgets/forms/PfslTargetFormWidget";
 // import PslTargetFormWidget from "scenes/widgets/forms/PslTargetFormWidget";
 import HotelAllTargetFormWidget from "scenes/widgets/forms/HotelAllTargetFormWidget";
+import { canAccessProperty } from "../../utils/propertyAccess";
 
 const BudgetPage = () => {
   const navigate = useNavigate();
@@ -26,7 +27,8 @@ const BudgetPage = () => {
   //
   //
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
-  const { _id } = useSelector((state) => state.user);
+  const user = useSelector((state) => state.user);
+  const { _id } = user;
   const token = useSelector((state) => state.token);
   const subsidiary = useSelector((state) => state.user.subsidiary);
   //
@@ -37,10 +39,7 @@ const BudgetPage = () => {
   const checkMapping = () => {
     console.log("filturedProperty[0].subsidiary: " + filturedProperty[0].subsidiary);
     console.log("subsidiary: " + subsidiary);
-    if (
-      filturedProperty[0].subsidiary === subsidiary ||
-      filturedProperty[0].subsidiary.split("-")[0] === subsidiary
-    ) {
+    if (canAccessProperty(user, filturedProperty[0])) {
       let selectedWidget;
       if (subsidiary === "Hotel") {
         if(filturedProperty[0].subsidiary === "Hotel-All"){

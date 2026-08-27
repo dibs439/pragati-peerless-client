@@ -24,26 +24,16 @@ import { Formik, Form, Field } from "formik";
 import * as yup from "yup";
 
 ////////////////////////////////
-const monthsArray = [
-  "December",
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
+const calendarMonths = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
-const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-const currentMonth = new Date().getMonth();
-//let daysLeft = monthDays[currentMonth] - new Date().getDate() - 1;
-let daysLeft = 20 - new Date().getDate();
+const latestActualDate = new Date();
+latestActualDate.setDate(1);
+latestActualDate.setMonth(latestActualDate.getMonth() - 1);
+const daysLeft = Math.max(0, 15 - new Date().getDate());
+const entryWindowClosed = new Date().getDate() > 15;
 //let today = monthDays - new Date().getDate()
 
 ////////////////////////////////
@@ -72,31 +62,43 @@ const HotelAllActualFormWidget = ({ propertyName, propertyCode, propertyId }) =>
   };
   //
   const { _id } = useSelector((state) => state.user);
+  const userRole = useSelector((state) => state.user.userRole);
+  const isAdmin = userRole === 1;
   const token = useSelector((state) => state.token);
   const subsidiary = useSelector((state) => state.user.subsidiary);
   const [sessionTarget, setSessionTarget] = useState({});
   const [formLocked, setFormLocked] = useState(false);
+  const [actualMonth, setActualMonth] = useState(calendarMonths[latestActualDate.getMonth()]);
+  const [actualYear, setActualYear] = useState(latestActualDate.getFullYear());
+
+  const changeActualMonth = (offset) => {
+    const nextDate = new Date(actualYear, calendarMonths.indexOf(actualMonth) + offset, 1);
+    if (nextDate <= latestActualDate) {
+      setActualMonth(calendarMonths[nextDate.getMonth()]);
+      setActualYear(nextDate.getFullYear());
+    }
+  };
   //
   //setSessionTarget({...initialValuesTarget});
   //
   const getBudget = async () => {
     //"/",
     const response = await fetch(
-      `/actual?propertyCode=${propertyCode}&actualYear=${new Date().getFullYear()}&actualMonth=${
-        monthsArray[currentMonth]
-      } `,
+      `/actual?propertyCode=${propertyCode}&propertyId=${propertyId}&actualYear=${actualYear}&actualMonth=${actualMonth}`,
       {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       }
     );
     const data = await response.json();
+    setFormLocked(false);
+    setSessionTarget({});
     if (data[0]) {
       //alert("Data is available");
       //initialValuesTarget = { ...data[0].payload };
       setSessionTarget({ ...data[0].payload });
       //alert("data[0].locked: " + data[0].locked);
-      if (data[0].locked) {
+      if (data[0].locked && !isAdmin) {
         setFormLocked(true);
       }
       //alert("initialValuesTarget: " + JSON.stringify(initialValuesTarget));
@@ -107,7 +109,7 @@ const HotelAllActualFormWidget = ({ propertyName, propertyCode, propertyId }) =>
 
   useEffect(() => {
     getBudget();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [actualMonth, actualYear, propertyCode, propertyId, isAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
   //
 
   //
@@ -119,6 +121,8 @@ const HotelAllActualFormWidget = ({ propertyName, propertyCode, propertyId }) =>
       propertyName,
       propertyCode,
       propertyId,
+      actualMonth,
+      actualYear,
       payload: { ...values },
     };
     // setFormData(data);
@@ -147,7 +151,7 @@ const HotelAllActualFormWidget = ({ propertyName, propertyCode, propertyId }) =>
         alert(savedActual.message);
       } else {
         alert("Data saved to the server");
-        setFormLocked(true);
+        if (!isAdmin) setFormLocked(true);
       }
     } else {
       alert("Error Saving data");
@@ -158,7 +162,7 @@ const HotelAllActualFormWidget = ({ propertyName, propertyCode, propertyId }) =>
 
   let returnValue = "";
 
-  if (formLocked) {
+  if (formLocked && !isAdmin) {
     returnValue = (
       <>
         <Typography
@@ -175,7 +179,7 @@ const HotelAllActualFormWidget = ({ propertyName, propertyCode, propertyId }) =>
         <h1> </h1>
       </>
     );
-  } else if(daysLeft <=0){
+  } else if(entryWindowClosed && !isAdmin){
     returnValue = (
       <>
         <Typography
@@ -207,9 +211,23 @@ const HotelAllActualFormWidget = ({ propertyName, propertyCode, propertyId }) =>
   else {
     returnValue = (
       <>
+        {isAdmin && (
+          <Box display="flex" justifyContent="center" alignItems="center" gap={2} mb={2}>
+            <Button variant="outlined" onClick={() => changeActualMonth(-1)}>Previous month</Button>
+            <Typography fontSize={20} fontWeight={700}>{actualMonth} {actualYear}</Typography>
+            <Button
+              variant="outlined"
+              onClick={() => changeActualMonth(1)}
+              disabled={actualMonth === calendarMonths[latestActualDate.getMonth()] && actualYear === latestActualDate.getFullYear()}
+            >
+              Next month
+            </Button>
+          </Box>
+        )}
         <Formik
           onSubmit={handleFormSubmit}
-          initialValues={initialValuesTarget}
+          initialValues={{ ...initialValuesTarget, ...sessionTarget }}
+          enableReinitialize
           validationSchema={targetSchema}
         >
           {({
@@ -284,8 +302,8 @@ const HotelAllActualFormWidget = ({ propertyName, propertyCode, propertyId }) =>
                               color="#FF0000"
                             >
                               Achievements for the month of <br />
-                              {monthsArray[currentMonth]}{" "}
-                              {new Date().getFullYear()}
+                              {actualMonth}{" "}
+                              {actualYear}
                             </Typography>
                             <br />
                             <Box>
@@ -452,9 +470,7 @@ const HotelAllActualFormWidget = ({ propertyName, propertyCode, propertyId }) =>
                               //color="#11142D"
                               color="#FF0000"
                             >
-                              <i>
-                                *Page freezes in: <b>{daysLeft}</b> days
-                              </i>
+                              <i>{isAdmin ? "*Admin editing remains available for past months." : <>*Page freezes in: <b>{daysLeft}</b> days</>}</i>
                               <br />
                             </Typography>
                           </Box>

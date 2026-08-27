@@ -20,6 +20,7 @@ import HospitalActualFormWidget from "scenes/widgets/forms/HospitalActualFormWid
 // import PfslActualFormWidget from "scenes/widgets/forms/PfslActualFormWidget";
 // import PslActualFormWidget from "scenes/widgets/forms/PslActualFormWidget";
 import HotelAllActualFormWidget from "scenes/widgets/forms/HotelAllActualFormWidget";
+import { canAccessProperty } from "../../utils/propertyAccess";
 
 const ActualPage = () => {
   const navigate = useNavigate();
@@ -28,7 +29,8 @@ const ActualPage = () => {
 
   //
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
-  const { _id } = useSelector((state) => state.user);
+  const user = useSelector((state) => state.user);
+  const { _id } = user;
   const token = useSelector((state) => state.token);
   const subsidiary = useSelector((state) => state.user.subsidiary);
   //
@@ -38,10 +40,7 @@ const ActualPage = () => {
 
   const checkMapping = () => {
     //if (filturedProperty[0].subsidiary === subsidiary) {
-      if (
-        filturedProperty[0].subsidiary === subsidiary ||
-        filturedProperty[0].subsidiary.split("-")[0] === subsidiary
-      ){
+      if (canAccessProperty(user, filturedProperty[0])) {
       let selectedWidget;
       //alert("subsidiary: "+subsidiary +" filturedProperty[0].subsidiary: "+filturedProperty[0].subsidiary)
       if (subsidiary === "Hotel") {

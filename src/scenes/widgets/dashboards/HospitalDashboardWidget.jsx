@@ -77,7 +77,7 @@ const HospitalDashboardWidget = ({ propertyId }) => {
 
   const displayProperties = () => {
     if (!selectedProperty) {
-      return <h1>No Property is available for this user</h1>;
+      return <h1>No Unit is available for this user</h1>;
     } else {
       return <h1>Dashboard Page: {subsidiary}</h1>;
     }

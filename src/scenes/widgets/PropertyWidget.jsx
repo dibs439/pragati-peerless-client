@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 //import { setPosts } from "state";
 import allProperties from "data/properties";
 import HotelPropertyWidget from "./HotelPropertyWidget";
+import { canAccessProperty } from "../../utils/propertyAccess";
 
 const PropertyWidget = ({ propertyId }) => {
   //const dispatch = useDispatch();
@@ -30,7 +31,8 @@ const PropertyWidget = ({ propertyId }) => {
   //const [image, setImage] = useState(null);
   //const [post, setPost] = useState("");
   //const { palette } = useTheme();
-  const { _id, userRole } = useSelector((state) => state.user);
+  const user = useSelector((state) => state.user);
+  const { _id, userRole } = user;
   //const token = useSelector((state) => state.token);
 
   const subsidiary = useSelector((state) => state.user.subsidiary);
@@ -46,13 +48,22 @@ const PropertyWidget = ({ propertyId }) => {
   );
 
   const checkMapping = () => {
+    if (!canAccessProperty(user, filturedProperty[0])) {
+      const unitLabel = filturedProperty[0].subsidiary.startsWith("Hospital")
+        ? "unit"
+        : "property";
+      return <h1>You are not authorised to view this {unitLabel}</h1>;
+    }
     if (
       subsidiary !== "Hotel" &&
       subsidiary !== "PGFI" &&
       filturedProperty[0].subsidiary !== subsidiary &&
       filturedProperty[0].subsidiary.split("-")[0] !== subsidiary
     ) {
-      return <h1>You are not authorised to view this property </h1>;
+      const unitLabel = filturedProperty[0].subsidiary.startsWith("Hospital")
+        ? "unit"
+        : "property";
+      return <h1>You are not authorised to view this {unitLabel}</h1>;
     } else if (
       subsidiary === "PGFI" ||
       filturedProperty[0].propertyCode === "PHL-All"
@@ -115,18 +126,22 @@ const PropertyWidget = ({ propertyId }) => {
 
   const checkControls = () => {
     let isRating = true;
-    if (userRole === 0 && subsidiary !== "PGFI") {
+    const isHospitalUnitAdmin =
+      userRole === 1 && user.subsidiaryId?.startsWith("PHH-");
+    if ((userRole === 0 || userRole === 1) && subsidiary !== "PGFI") {
       return (
         <>
           <Divider sx={{ margin: "1.25rem 0" }} />
           <FlexBetween gap="1rem" mb="0.5rem">
-            <Button
-              size="large"
-              variant="text"
-              onClick={() => navigate(`/property/budget/add/${propertyId}`)}
-            >
-              Add Budget Data
-            </Button>
+            {(userRole === 0 || isHospitalUnitAdmin) && (
+              <Button
+                size="large"
+                variant="text"
+                onClick={() => navigate(`/property/budget/add/${propertyId}`)}
+              >
+                Add Budget Data
+              </Button>
+            )}
             <Button
               size="large"
               variant="text"

@@ -10,13 +10,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setPosts } from "state";
 import allProperties from "../../data/properties";
+import { canAccessProperty } from "../../utils/propertyAccess";
 
 const HotelPropertyWidget = ({ subs }) => {
   const dispatch = useDispatch();
   const [image, setImage] = useState(null);
   const [post, setPost] = useState("");
   const { palette } = useTheme();
-  const { _id } = useSelector((state) => state.user);
+  const user = useSelector((state) => state.user);
+  const { _id } = user;
   const token = useSelector((state) => state.token);
   const subsidiary = useSelector((state) => state.user.subsidiary);
   //
@@ -35,9 +37,9 @@ const HotelPropertyWidget = ({ subs }) => {
   // );
   const landingSubsidiary =
     subsidiary === "Hospital" ? "Hospital-All" : "Hotel-All";
-  filturedProps = allProperties.filter(
-    (property) => property.subsidiary === landingSubsidiary
-  );
+  filturedProps = user.subsidiaryId?.startsWith("PHH-")
+    ? allProperties.filter((property) => canAccessProperty(user, property))
+    : allProperties.filter((property) => property.subsidiary === landingSubsidiary);
   let second_path
   if (subsidiary === "Hospital") {
     second_path = `/hospital_properties`
@@ -50,10 +52,22 @@ const HotelPropertyWidget = ({ subs }) => {
 
   const displayProperties = () => {
     if (filturedProps.length === 0) {
-      return <h1>No Property is available for this user</h1>;
+      return <h1>No {subsidiary === "Hospital" ? "Unit" : "Property"} is available for this user</h1>;
       // }else if(filturedProps.length === 1 ){
       //   //alert("Only One Property is available now: "+filturedProps[0]._id)
       //   return navigate(`/property/show/${filturedProps[0]._id}`)
+    } else if (filturedProps.length === 1) {
+      const property = filturedProps[0];
+      return (
+        <PropertyCard
+          key={property._id}
+          id={property._id}
+          title={property.title}
+          location={property.location}
+          photo={property.photo_small}
+          linkPath={`/property/show/${property._id}`}
+        />
+      );
     } else {
       //   return filturedProps?.map((property) => (
       //     // {if(property.propertyType == ){

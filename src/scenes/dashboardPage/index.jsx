@@ -14,20 +14,22 @@ import HotelDashboardWidget from "scenes/widgets/dashboards/HotelDashboardWidget
 import PfpdlDashboardWidget from "scenes/widgets/dashboards/PfpdlDashboardWidget";
 import PfslDashboardWidget from "scenes/widgets/dashboards/PfslDashboardWidget";
 import PslDashboardWidget from "scenes/widgets/dashboards/PslDashboardWidget";
+import { canAccessProperty } from "../../utils/propertyAccess";
 //import MyPostWidget from "scenes/widgets/MyPostWidget";
 //import PostsWidget from "scenes/widgets/PostsWidget";
 //import FriendListWidget from "scenes/widgets/FriendListWidget";
 
 const DashboardPage = () => {
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
-  const { _id, picturePath, subsidiary } = useSelector((state) => state.user);
+  const user = useSelector((state) => state.user);
+  const { _id, picturePath, subsidiary } = user;
   const { propertyId } = useParams();
   const navigate = useNavigate();
 
   const filturedProperty = allProperties.filter(property => property._id === propertyId );
 
   const checkMapping = ()=>{
-    if( (subsidiary === "PGFI") || (subsidiary === "Hotel") || (filturedProperty[0].subsidiary === subsidiary ) || (filturedProperty[0].subsidiary.split("-")[0] === subsidiary) ){
+    if (canAccessProperty(user, filturedProperty[0])) {
       let selectedWidget
       if ( (filturedProperty[0].subsidiary === "Hotel") || (filturedProperty[0].subsidiary === "Hotel-All") || (filturedProperty[0].subsidiary === "PGFI") ){
         selectedWidget = <HotelDashboardWidget propertyId={propertyId} />
