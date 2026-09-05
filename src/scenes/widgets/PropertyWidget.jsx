@@ -126,14 +126,12 @@ const PropertyWidget = ({ propertyId }) => {
 
   const checkControls = () => {
     let isRating = true;
-    const isHospitalUnitAdmin =
-      userRole === 1 && user.subsidiaryId?.startsWith("PHH-");
     if ((userRole === 0 || userRole === 1) && subsidiary !== "PGFI") {
       return (
         <>
           <Divider sx={{ margin: "1.25rem 0" }} />
           <FlexBetween gap="1rem" mb="0.5rem">
-            {(userRole === 0 || isHospitalUnitAdmin) && (
+            {(userRole === 0 || userRole === 1) && (
               <Button
                 size="large"
                 variant="text"

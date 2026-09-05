@@ -97,7 +97,8 @@ const HospitalActualFormWidget = ({ propertyName, propertyCode, propertyId }) =>
   const [formLocked, setFormLocked] = useState(false);
   const token = useSelector((state) => state.token);
   const user = useSelector((state) => state.user);
-  const isHospitalUnitUser = user.subsidiaryId?.startsWith("PHH-");
+  const isHospitalUnitUser =
+    user.subsidiaryId?.startsWith("PHH-") || user.propertyAccess?.length > 0;
   const isAdmin = user.userRole === 1 && !isHospitalUnitUser;
   const [actualMonth, setActualMonth] = useState(calendarMonths[latestActualDate.getMonth()]);
   const [actualYear, setActualYear] = useState(latestActualDate.getFullYear());

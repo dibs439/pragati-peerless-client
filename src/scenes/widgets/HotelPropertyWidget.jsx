@@ -37,7 +37,10 @@ const HotelPropertyWidget = ({ subs }) => {
   // );
   const landingSubsidiary =
     subsidiary === "Hospital" ? "Hospital-All" : "Hotel-All";
-  filturedProps = user.subsidiaryId?.startsWith("PHH-")
+  const isRestrictedHospitalUnit =
+    user.subsidiaryId?.startsWith("PHH-") ||
+    user.propertyAccess?.length > 0;
+  filturedProps = isRestrictedHospitalUnit
     ? allProperties.filter((property) => canAccessProperty(user, property))
     : allProperties.filter((property) => property.subsidiary === landingSubsidiary);
   let second_path
